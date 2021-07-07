@@ -23,18 +23,6 @@ ggplot(data = dados,
   stat_summary(geom = "line", fun = "mean")
 
 #-----------------------------------------------------------------------
-#Função logistica
-  # xL é o valor máximo da curva (platô)  
-  # xbeta0 ponto médio da curva no xdia
-  # xbeta declividade da curva
-
-fn_logistic <- function( xdias, xL, xbeta, xbeta0 ){
-  
-  out <- xL/(1+exp(xbeta*(xdias - xbeta0)))
-
-}
-
-#-----------------------------------------------------------------------
 
 
 canal_a <- dados %>%
@@ -114,7 +102,6 @@ plot(Y ~ DIAS,
      xlab = "Dias da abertura",
      main ="Projeção de número de inscritos para os próximos 365 dias",
      sub = subtitle)
-
 with(fit,
      curve(L/(1 + exp(B * (x - M))),
            add = TRUE,
