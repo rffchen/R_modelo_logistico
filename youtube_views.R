@@ -47,7 +47,7 @@ last_day <- tail(canal_a$DIAS, n=1) + 365
 
 nviews <- predict(n0, newdata = list(DIAS = last_day))
 
-subtitle <- sprintf("Número de inscritors %s * 100000", round(nviews,2))
+subtitle <- sprintf("Número de inscritors %s * 100000", round(nviews,0))
 
 plot(Y ~ DIAS,
      data = canal_a,
@@ -63,6 +63,7 @@ with(fit,
            add = TRUE,
            lwd = 2,
            col = "pink"))
+
 points(x = last_day, pch = 20, col = "red",
        y = nviews)
 
