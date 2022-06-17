@@ -1,8 +1,6 @@
 # https://en.wikipedia.org/wiki/Logistic_function
 # https://www.youtube.com/watch?v=ykO8QVu-v8g
 
-
-
 #Bibliotecas
 library(tidyverse)
 
@@ -13,7 +11,7 @@ dados <- read.table("youtube.txt", header = TRUE)
 dados <- dados %>%
     group_by(CANAL) %>%
     arrange(DIAS) %>%
-    mutate(Y = cumsum(INSCRITOS)) %>%
+    mutate(Y = cumsum(INSCRITOS)/100000) %>%
     ungroup()
 
 
@@ -51,9 +49,9 @@ f_ols <- function( par, dias, y) {
         return(SQ)
   }
 
-xpar= c(3052496,0.01,1526248)
-
 xpar= c(0,0,0)
+
+xpar= c(46,-0.001,46)
 
 fit_logit_ols <- optim( par= xpar,
                         fn = f_ols, 
@@ -62,24 +60,58 @@ fit_logit_ols <- optim( par= xpar,
 
 fit_logit_ols$par
 
-lst_day <- tail(canal_a,1)[1]%>%pull() + 365
+lst_day <- tail(canal_a,1)[1]%>%
+            pull() + 365
 
 DIAS <- seq(1:lst_day)
-v <- f_log(DIAS = DIAS, L = fit_logit_ols$par[1], beta = fit_logit_ols$par[2], beta0 = fit_logit_ols$par[3])
 
-plot(f_log(DIAS = DIAS, L = fit_logit_ols$par[1], beta = fit_logit_ols$par[2], beta0 = fit_logit_ols$par[3]) ~ DIAS, 
+plot(f_log(DIAS = DIAS, 
+           L = fit_logit_ols$par[1], 
+           beta = fit_logit_ols$par[3], 
+           beta0 = fit_logit_ols$par[3]) ~ DIAS, 
      ylab = "Número de inscritos", xlab = "Dias da abertura",
      type = "l")
 
-############# MODELO UTILIZANDO O NLS ----------------------------------
 
-start <- list(L = 3052496,  beta = -0.02, beta0 = 1526248)
 
-start <- list(L = 0,  beta = 0, beta0 = 0)
 
-n0 <- nls(Y ~ L/(1 + exp(-beta * (DIAS - beta0))),
+
+############################# NLS #############################################
+
+
+plot(Y ~ DIAS, data = canal_a )
+
+start <- list(L = 20, M = 60, B = -0.01)
+
+with(start,
+     curve(L/(1 + exp(B * (x - M))), add = TRUE, col = "red"))
+
+n0 <- nls(Y ~ L/(1 + exp(B * (DIAS - M))),
           data = canal_a,
           start = start,
           trace = TRUE)
 
-n0
+fit <- as.list(coef(n0))
+#fit
+last_day <- tail(canal_a$DIAS, n=1) + 365
+
+nviews <- predict(n0, newdata = list(DIAS = last_day))
+
+subtitle <- sprintf("Número de inscritors %s * 100000", round(nviews,2))
+
+plot(Y ~ DIAS,
+     data = canal_a,
+     xlim = c(0, 1100),
+     ylim = c(0, 50),
+     ylab = "Número de inscritos",
+     xlab = "Dias da abertura",
+     main ="Projeção de número de inscritos para os próximos 365 dias",
+     sub = subtitle)
+
+with(fit,
+     curve(L/(1 + exp(B * (x - M))),
+           add = TRUE,
+           lwd = 2,
+           col = "pink"))
+points(x = last_day, pch = 20, col = "red",
+       y = nviews)
